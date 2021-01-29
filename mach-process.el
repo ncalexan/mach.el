@@ -102,6 +102,14 @@
   "Subcommand used by `mach-process-check'."
   :type 'string)
 
+(defcustom mach-process--command-current-file-lint "lint --fix"
+  "Subcommand used by `mach-process-current-file-lint'."
+  :type 'string)
+
+(defcustom mach-process--command-outgoing-lint "lint -o --fix"
+  "Subcommand used by `mach-process-outgoing-lint'."
+  :type 'string)
+
 (defface mach-process--ok-face
   '((t (:inherit success)))
   "Ok face"
@@ -405,6 +413,24 @@ Mach: Check compile the current project.
 Requires mach-check to be installed."
   (interactive)
   (mach-process--start "check" mach-process--command-check))
+
+;;;###autoload
+(defun mach-process-current-file-lint ()
+  "Run the mach lint command for the current file.
+With the prefix argument, modify the command's invocation.
+Mach: Lint."
+  (interactive)
+  (mach-process--start "lint" (concat mach-process--command-current-file-lint
+                                      " "
+                                      (or (buffer-file-name) default-directory))))
+
+;;;###autoload
+(defun mach-process-outgoing-lint ()
+  "Run the mach lint command for all outgoing files.
+With the prefix argument, modify the command's invocation.
+Mach: Lint."
+  (interactive)
+  (mach-process--start "lint" mach-process--command-outgoing-lint))
 
 ;;;###autoload
 (defun mach-process-repeat ()

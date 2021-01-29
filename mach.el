@@ -261,6 +261,8 @@
 (define-key mach-minor-mode-map (kbd "C-c C-c C-o") 'mach-process-current-file-tests)
 (define-key mach-minor-mode-map (kbd "C-c C-c C-d") 'mach-process-current-directory-tests)
 (define-key mach-minor-mode-map (kbd "C-c C-c C-k") 'mach-process-check)
+(define-key mach-minor-mode-map (kbd "C-c C-c C-l") 'mach-process-current-file-lint)
+(define-key mach-minor-mode-map (kbd "C-c C-c C-S-l") 'mach-process-outgoing-lint)
 
 ;; TODO: make eshell display mozconfig in modeline or prompt.
 
