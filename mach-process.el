@@ -135,10 +135,8 @@
   "Error number face"
   :group 'mach-process)
 
-(defconst mach-process--rust-backtrace "RUST_BACKTRACE")
-
-(defconst mach-process-test-regexp "^[[:space:]]*fn[[:space:]]*"
-  "Regex to find Rust unit test function.")
+(defconst mach-process-test-regexp "^[[:space:]]*add_task.*function[[:space:]]*"
+  "Regex to find current unit test function.")
 
 (defconst mach-process-test-mod-regexp "^[[:space:]]*mod[[:space:]]+[[:word:][:multibyte:]_][[:word:][:multibyte:]_[:digit:]]*[[:space:]]*{")
 
@@ -259,14 +257,13 @@
   "Start the mach process NAME with the mach command COMMAND.
 OPENS-EXTERNAL is non-nil if the COMMAND is expected to open an external application.
 Returns the created process."
-  (set-rust-backtrace command)
   (let* ((buffer (concat "*mach " name "*"))
          (project-root (mach-process--project-root))
          (cmd
           (or last-cmd
               (mach-process--maybe-read-command
                (mach-process--augment-cmd-for-os opens-external
-                                                 (mapconcat #'identity (list (format "env MOZCONFIG=%s" (mach-get-current-mozconfig))
+                                                 (mapconcat #'identity (list (format "env MOZCONFIG=%s MOZ_DISABLE_STACK_FIX=1" (mach-get-current-mozconfig))
                                                                              (shell-quote-argument mach-process--custom-path-to-bin)
                                                                              command
                                                                              mach-process--command-flags)

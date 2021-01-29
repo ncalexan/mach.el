@@ -236,7 +236,9 @@
   "Mode with tools for working on Mozilla (Firefox) source repositories.
 
 \\{mach-minor-mode-map}"
-  nil mach-minor-mode-line mach-minor-mode-map
+  nil
+  nil ;; mach-minor-mode-line
+  mach-minor-mode-map
   ;; (if mach-mode
   ;;     (progn
   ;;       (mc/temporarily-disable-unsupported-minor-modes)
@@ -318,7 +320,7 @@
         (let ((env (shell-command-to-string (format "env MOZCONFIG=%s ./mach environment --format json" (mach-get-current-mozconfig)))))
           (alist-get 'topobjdir (json-read-from-string env)))))))
 
-(when (require 'eshell)
+(with-eval-after-load 'esh-var
   (add-to-list 'eshell-variable-aliases-list (list "TOPOBJDIR" (lambda (&rest r) (mach-get-current-topobjdir)))))
 
 (provide 'mach)
