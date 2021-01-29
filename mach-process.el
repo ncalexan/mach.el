@@ -82,19 +82,19 @@
   "Subcommand used by `mach-process-run'."
   :type 'string)
 
-(defcustom mach-process--command-test "test"
+(defcustom mach-process--command-test "test --headless"
   "Subcommand used by `mach-process-test'."
   :type 'string)
 
-(defcustom mach-process--command-current-test "test"
+(defcustom mach-process--command-current-test "test --headless"
   "Subcommand used by `mach-process-current-test'."
   :type 'string)
 
-(defcustom mach-process--command-current-file-tests "test"
+(defcustom mach-process--command-current-file-tests "test --headless"
   "Subcommand used by `mach-process-current-file-tests'."
   :type 'string)
 
-(defcustom mach-process--command-current-directory-tests "test"
+(defcustom mach-process--command-current-directory-tests "test --headless"
   "Subcommand used by `mach-process-current-directory-tests'."
   :type 'string)
 
