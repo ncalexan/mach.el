@@ -28,7 +28,6 @@
 ;;  * mach-process-run                - Build and execute src/main.rs.
 ;;  * mach-process-test               - Run all unit tests.
 ;;  * mach-process-repeat             - Run the last mach-process command.
-;;  * mach-process-current-test       - Run the current unit test.
 ;;  * mach-process-current-file-tests - Run the current file unit tests.
 ;;  * mach-process-current-directory-tests - Run the current directory unit tests.
 ;;  * mach-process-check              - Run the optional mach command check.
@@ -84,10 +83,6 @@
 
 (defcustom mach-process--command-test "test --headless"
   "Subcommand used by `mach-process-test'."
-  :type 'string)
-
-(defcustom mach-process--command-current-test "test --headless"
-  "Subcommand used by `mach-process-current-test'."
   :type 'string)
 
 (defcustom mach-process--command-current-file-tests "test --headless"
@@ -295,37 +290,6 @@ Returns the created process."
       (set-process-sentinel process 'mach-process--finished-sentinel)
       process)))
 
-(defun mach-process--get-current-test ()
-  "Return the current test."
-  (save-excursion
-    (unless (mach-process--defun-at-point-p)
-      (rust-beginning-of-defun))
-    (beginning-of-line)
-    (search-forward "fn ")
-    (let* ((line (buffer-substring-no-properties (point)
-                                                 (line-end-position)))
-           (lines (split-string line "("))
-           (function-name (car lines)))
-      function-name)))
-
-(defun mach-process--get-current-mod ()
-  "Return the current mod."
-  (save-excursion
-    (when (search-backward-regexp mach-process-test-mod-regexp nil t)
-      (let* ((line (buffer-substring-no-properties (line-beginning-position)
-                                                   (line-end-position)))
-             (line (string-trim-left line))
-             (lines (split-string line " \\|{"))
-             (mod (cadr lines)))
-        mod))))
-
-(defun mach-process--get-current-test-fullname ()
-  (if (mach-process--get-current-mod)
-      (concat (mach-process--get-current-mod)
-              "::"
-              (mach-process--get-current-test))
-    (mach-process--get-current-test)))
-
 (defun mach-process--maybe-read-command (default)
   "Prompt to modify the DEFAULT command when the prefix argument is present.
 Without the prefix argument, return DEFAULT immediately."
@@ -375,17 +339,6 @@ Mach: Run the tests."
   (mach-process--start "test" mach-process--command-test))
 
 ;;;###autoload
-(defun mach-process-current-test ()
-  "Run the mach test command for the current test.
-With the prefix argument, modify the command's invocation.
-Mach: Run the tests."
-  (interactive)
-  (mach-process--start "test"
-                        (concat mach-process--command-current-test
-                                " "
-                                (mach-process--get-current-test-fullname))))
-
-;;;###autoload
 (defun mach-process-current-file-tests ()
   "Run the mach test command for the current file.
 With the prefix argument, modify the command's invocation.
@@ -401,7 +354,7 @@ Mach: Run the tests."
 With the prefix argument, modify the command's invocation.
 Mach: Run the tests."
   (interactive)
-  (mach-process--start "test" (concat mach-process--command-current-file-tests
+  (mach-process--start "test" (concat mach-process--command-current-directory-tests
                                        " "
                                        default-directory)))
 
