@@ -89,6 +89,10 @@
   "Subcommand used by `mach-process-current-file-tests'."
   :type 'string)
 
+(defcustom mach-process--command-current-file-gtests "gtest"
+  "Subcommand used by `mach-process-current-file-tests'."
+  :type 'string)
+
 (defcustom mach-process--command-current-directory-tests "test --headless"
   "Subcommand used by `mach-process-current-directory-tests'."
   :type 'string)
@@ -341,10 +345,18 @@ Mach: Run the tests."
 With the prefix argument, modify the command's invocation.
 Mach: Run the tests."
   (interactive)
-  (mach-process--start "test" (concat mach-process--command-current-file-tests
-                                      " "
-                                      (or (buffer-file-name) default-directory))))
-
+  (let* ((target (or (buffer-file-name) default-directory))
+         (base (f-base target))
+         (ext (downcase (f-ext (buffer-file-name)))))
+    (if (and (s-equals? "cpp" ext)
+             (string-match "^Test\\(.+\\)" base))
+        (mach-process--start "test" (concat mach-process--command-current-file-gtests
+                                            " '"
+                                            (match-string 1 base)
+                                            ".*'"))
+      (mach-process--start "test" (concat mach-process--command-current-file-tests
+                                          " "
+                                          target)))))
 ;;;###autoload
 (defun mach-process-current-directory-tests ()
   "Run the mach test command for the current directory.
