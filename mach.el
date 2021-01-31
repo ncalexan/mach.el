@@ -274,7 +274,7 @@
     (let ((root (projectile-project-root)))
       (while root
         ;; (message "root %s" root)
-        (let ((eshell-buffer (get-buffer (projectile-generate-process-name "eshell" nil root))))
+        (let ((eshell-buffer (get-buffer (projectile-generate-process-name "eshell" nil))))
           ;; (message "eshell-buffer %s" eshell-buffer)
           (when eshell-buffer
             (with-current-buffer eshell-buffer
