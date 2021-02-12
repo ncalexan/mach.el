@@ -56,10 +56,10 @@
   :type 'file
   :group 'mach-process)
 
-(defcustom mach-process--command-flags ""
+(defcustom mach-process--command-flags '()
   "Flags to be added to every mach command when run."
   :group 'mach-process
-  :type 'string)
+  :type '(list string))
 
 (defvar mach-process-mode-map
   (nconc (make-sparse-keymap) compilation-mode-map)
@@ -267,10 +267,10 @@ Returns the created process."
           (or last-cmd
               (mach-process--maybe-read-command
                (mach-process--augment-cmd-for-os opens-external
-                                                 (mapconcat #'identity (list (format "env MOZCONFIG=%s MOZ_DISABLE_STACK_FIX=1" (mach-get-current-mozconfig))
-                                                                             (shell-quote-argument mach-process--custom-path-to-bin)
-                                                                             command
-                                                                             mach-process--command-flags)
+                                                 (mapconcat #'identity (append (list (format "env MOZCONFIG=%s MOZ_DISABLE_STACK_FIX=1" (mach-get-current-mozconfig))
+                                                                                     (shell-quote-argument mach-process--custom-path-to-bin)
+                                                                                     command)
+                                                                               mach-process--command-flags)
                                                             " ")))))
          (default-directory (or project-root default-directory)))
     (save-some-buffers (not compilation-ask-about-save)
