@@ -257,11 +257,14 @@
 ;;     (funcall 'mach-process-mode)
 ;;     (setq-local window-point-insertion-type t)))
 
+(defvar-local mach-process--originating-buffer nil)
+
 (defun mach-process--start (name command &optional last-cmd opens-external)
   "Start the mach process NAME with the mach command COMMAND.
 OPENS-EXTERNAL is non-nil if the COMMAND is expected to open an external application.
 Returns the created process."
-  (let* ((buffer (concat "*mach " name "*"))
+  (let* ((originating-buffer (current-buffer))
+         (buffer (concat "*mach " name "*"))
          (project-root (mach-process--project-root))
          (cmd
           (or last-cmd
@@ -287,6 +290,8 @@ Returns the created process."
                                        (f-join topobjdir "dist" "bin" "browser" "modules")
                                        (f-join topobjdir "dist" "bin" "modules"))))
       (compilation-start cmd 'mach-process-mode (lambda(_) buffer)))
+    (with-current-buffer buffer
+      (setq mach-process--originating-buffer originating-buffer))
     (let ((process (get-buffer-process buffer)))
       (set-process-sentinel process 'mach-process--finished-sentinel)
       process)))
@@ -376,12 +381,29 @@ Requires mach-check to be installed."
   (interactive)
   (mach-process--start "check" mach-process--command-check))
 
+(defun mach--process-current-file-lint-compilation-finish-function (buffer desc)
+  (when (and mach-process--originating-buffer
+             (buffer-live-p mach-process--originating-buffer)
+             (with-current-buffer buffer
+               (and (derived-mode-p 'mach-process-mode)
+                    (s-contains? (mapconcat #'identity
+                                            (list
+                                             (shell-quote-argument mach-process--custom-path-to-bin)
+                                             mach-process--command-current-file-lint)
+                                            " ")
+                                 (car compilation-arguments)))))
+    (with-current-buffer mach-process--originating-buffer
+      (revert-buffer t t t))))
+
 ;;;###autoload
 (defun mach-process-current-file-lint ()
   "Run the mach lint command for the current file.
 With the prefix argument, modify the command's invocation.
 Mach: Lint."
   (interactive)
+  (add-hook
+   'compilation-finish-functions
+   'mach--process-current-file-lint-compilation-finish-function)
   (mach-process--start "lint" (concat mach-process--command-current-file-lint
                                       " "
                                       (or (buffer-file-name) default-directory))))
