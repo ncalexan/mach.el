@@ -284,6 +284,22 @@
 
 (defvar-local mach-process--originating-buffer nil)
 
+(defun mach-environment-variables ()
+  (interactive)
+  (let ((env (or (catch 'result
+                   (let ((root (projectile-project-root)))
+                     (while root
+                       ;; (message "root %s" root)
+                       (when-let ((eshell-buffer (get-buffer (projectile-generate-process-name "eshell" nil))))
+                         ;; (message "eshell-buffer %s" eshell-buffer)
+                         (with-current-buffer eshell-buffer
+                           ;; (message "MOZCONFIG %S" (getenv "MOZCONFIG"))
+                           (throw 'result (eshell-environment-variables))))
+                       (setq root (f-parent root)))))
+                 process-environment)))
+    (-sort #'s-less?
+           (--filter (and (s-contains? "=" it) (not (s-ends-with? "=" it)) (s-starts-with? "MOZ" it)) env))))
+
 (defun mach-process--start (name command &optional last-cmd opens-external)
   "Start the mach process NAME with the mach command COMMAND.
 OPENS-EXTERNAL is non-nil if the COMMAND is expected to open an external application.
@@ -295,8 +311,9 @@ Returns the created process."
           (or last-cmd
               (mach-process--maybe-read-command
                (mach-process--augment-cmd-for-os opens-external
-                                                 (mapconcat #'identity (append (list (format "env MOZCONFIG=%s MOZ_DISABLE_STACK_FIX=1" (mach-get-current-mozconfig))
-                                                                                     (shell-quote-argument mach-process--custom-path-to-bin)
+                                                 (mapconcat #'identity (append (list "env")
+                                                                               (mach-environment-variables)
+                                                                               (list (shell-quote-argument mach-process--custom-path-to-bin)
                                                                                      command)
                                                                                mach-process--command-flags)
                                                             " ")))))
