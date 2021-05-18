@@ -215,6 +215,29 @@
   ;;       (start-col  "\\([0-9]+\\)"))
   ;;   (let ((re (concat "\\(" file ":" start-line "\\(?::" start-col)))) ; functionName@resource://path:line:col
 
+;; Match `mach lint` errors.  Modeled on
+;; https://github.com/Fuco1/compile-eslint/blob/20b2d34894530818ca042e5b5a9bb9ab6d024cc7/compile-eslint.el.
+
+;;;###autoload
+(defun compile-mach-lint--find-filename ()
+  "Find the filename for current error."
+  (save-match-data
+    (save-excursion
+      ;; TODO: Make sure that this works on Windows as well.
+      (when (re-search-backward (rx bol (group (| (seq "/" (+ any))
+                                                  (seq letter ":" (| "/" "\\") (+ any)))) eol))
+        (list (match-string 1))))))
+
+;;;###autoload
+(let ((form `(mach-lint
+              ,(rx-to-string
+                '(and (group (group (+ digit)) ":" (group (+ digit)))
+                      (+ " ") (or "error" "warning")))
+              compile-mach-lint--find-filename
+              2 3 2 1)))
+  (if (assq 'mach-lint compilation-error-regexp-alist-alist)
+      (setf (cdr (assq 'mach-lint compilation-error-regexp-alist-alist)) (cdr form))
+    (push form compilation-error-regexp-alist-alist)))
 
 ;; (eval-after-load 'compile
 ;;   '(progn
@@ -240,6 +263,8 @@
   (setq major-mode 'mach-process-mode)
   (setq mode-name "mach-Process")
   (setq-local truncate-lines t)
+  (add-to-list (make-local-variable 'compilation-error-regexp-alist) 'mach-lint)
+  ;; (add-to-list 'compilation-error-regexp-alist 'mach-test)
   ;; (setq-local compilation-error-regexp-alist (list 'mach-test))
   ;; (setq-local compilation-error-regexp-alist-alist (list (cons 'mach-test mach-test-compilation-regexp)))
   (run-hooks 'mach-process-mode-hook)
