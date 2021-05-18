@@ -24,7 +24,7 @@
 ;; Used to run mach background processes.
 ;; Current supported mach functions:
 ;;  * mach-process-build              - Compile the current project.
-;;  * mach-process-clean              - Remove the target directory.
+;;  * mach-process-clobber            - Remove the current object directory.
 ;;  * mach-process-run                - Build and execute src/main.rs.
 ;;  * mach-process-test               - Run all unit tests.
 ;;  * mach-process-repeat             - Run the last mach-process command.
@@ -73,8 +73,8 @@
   "Subcommand used by `mach-process-build'."
   :type 'string)
 
-(defcustom mach-process--command-clean "clean"
-  "Subcommand used by `mach-process-clean'."
+(defcustom mach-process--command-clobber "clobber"
+  "Subcommand used by `mach-process-clobber'."
   :type 'string)
 
 (defcustom mach-process--command-run "run"
@@ -320,19 +320,20 @@ Mach: Compile the current project."
   (interactive)
   (mach-process--start "build" mach-process--command-build))
 
+
 ;;;###autoload
-(defun mach-process-clean ()
-  "Run the mach clean command.
+(defun mach-process-clobber ()
+  "Run the mach clobber command.
 With the prefix argument, modify the command's invocation.
-Mach: Remove the target directory."
+Mach: Remove the object directory."
   (interactive)
-  (mach-process--start "clean" mach-process--command-clean))
+  (mach-process--start "clobber" mach-process--command-clobber))
 
 ;;;###autoload
 (defun mach-process-run ()
   "Run the mach run command.
 With the prefix argument, modify the command's invocation.
-Mach: Build and execute src/main.rs."
+Mach: Run the current project."
   (interactive)
   (mach-process--start "run" mach-process--command-run))
 

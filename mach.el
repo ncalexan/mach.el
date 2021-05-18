@@ -255,7 +255,7 @@
   )
 
 (define-key mach-minor-mode-map (kbd "C-c C-c C-b") 'mach-process-build)
-(define-key mach-minor-mode-map (kbd "C-c C-c C-l") 'mach-process-clean)
+(define-key mach-minor-mode-map (kbd "C-c C-c C-S-c") 'mach-process-clobber)
 (define-key mach-minor-mode-map (kbd "C-c C-c C-r") 'mach-process-run)
 (define-key mach-minor-mode-map (kbd "C-c C-c C-t") 'mach-process-test)
 (define-key mach-minor-mode-map (kbd "C-c C-c C-c") 'mach-process-repeat)
