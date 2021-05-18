@@ -253,7 +253,12 @@
 
 (defun mach-process--project-root (&optional extra)
   "Find the root of the current mach project."
-  (let ((root (locate-dominating-file (or buffer-file-name default-directory) "mach")))
+  (let ((root (locate-dominating-file (or buffer-file-name default-directory)
+                                      (lambda (dir)
+                                        (and (file-directory-p dir)
+                                             (let ((file (expand-file-name "mach" dir)))
+                                               (and (file-exists-p file)
+                                                    (not (file-directory-p file)))))))))
     (when root
       (file-truename (concat root extra)))))
 
