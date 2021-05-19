@@ -43,6 +43,8 @@
 ;;     (add-to-list 'compilation-error-regexp-alist-alist regexp)
 
 (require 'compile)
+(require 'f)
+(require 's)
 
 (defgroup mach-process nil
   "Mach Process group."
