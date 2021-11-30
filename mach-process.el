@@ -43,6 +43,7 @@
 ;;     (add-to-list 'compilation-error-regexp-alist-alist regexp)
 
 (require 'compile)
+(require 'dash)
 (require 'f)
 (require 's)
 (require 'transient)
@@ -295,18 +296,22 @@
 (defun mach-environment-variables ()
   (interactive)
   (let ((env (or (catch 'result
-                   (let ((root (projectile-project-root)))
+                   (when-let ((fboundp 'projectile-root)
+			                  (root (projectile-project-root)))
                      (while root
-                       ;; (message "root %s" root)
                        (when-let ((eshell-buffer (get-buffer (projectile-generate-process-name "eshell" nil))))
-                         ;; (message "eshell-buffer %s" eshell-buffer)
                          (with-current-buffer eshell-buffer
-                           ;; (message "MOZCONFIG %S" (getenv "MOZCONFIG"))
                            (throw 'result (eshell-environment-variables))))
                        (setq root (f-parent root)))))
                  process-environment)))
-    (-sort #'s-less?
-           (--filter (and (s-contains? "=" it) (not (s-ends-with? "=" it)) (s-starts-with? "MOZ" it)) env))))
+    ;; Avoid `mach lint` failing printing a UTF-8 cross or a check mark under Windows.
+    (cons "PYTHONIOENCODING=utf-8"
+          (cons "MOZ_PURGE_CACHES=1"
+                (-sort #'s-less?
+                       (--filter (and (s-contains? "=" it)
+                                      (not (s-ends-with? "=" it))
+                                      (s-starts-with? "MOZ" it)
+                                      (not (s-starts-with? "MOZILLABUILD=" it))) env))))))
 
 (defun mach-process--start (name command &optional last-cmd opens-external)
   "Start the mach process NAME with the mach command COMMAND.
