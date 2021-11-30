@@ -45,6 +45,7 @@
 (require 'compile)
 (require 'f)
 (require 's)
+(require 'transient)
 
 (defgroup mach-process nil
   "Mach Process group."
@@ -83,11 +84,11 @@
   "Subcommand used by `mach-process-run'."
   :type 'string)
 
-(defcustom mach-process--command-test "test --headless"
+(defcustom mach-process--command-test "test"
   "Subcommand used by `mach-process-test'."
   :type 'string)
 
-(defcustom mach-process--command-current-file-tests "test --headless"
+(defcustom mach-process--command-current-file-tests "test"
   "Subcommand used by `mach-process-current-file-tests'."
   :type 'string)
 
@@ -95,7 +96,7 @@
   "Subcommand used by `mach-process-current-file-tests'."
   :type 'string)
 
-(defcustom mach-process--command-current-directory-tests "test --headless"
+(defcustom mach-process--command-current-directory-tests "test"
   "Subcommand used by `mach-process-current-directory-tests'."
   :type 'string)
 
@@ -103,11 +104,11 @@
   "Subcommand used by `mach-process-check'."
   :type 'string)
 
-(defcustom mach-process--command-current-file-lint "lint --fix"
+(defcustom mach-process--command-current-file-lint "lint"
   "Subcommand used by `mach-process-current-file-lint'."
   :type 'string)
 
-(defcustom mach-process--command-outgoing-lint "lint -o --fix"
+(defcustom mach-process--command-outgoing-lint "lint --outgoing"
   "Subcommand used by `mach-process-outgoing-lint'."
   :type 'string)
 
@@ -362,13 +363,45 @@ if the CMD is expected to open and external application."
     cmd))
 
 ;;;###autoload
-(defun mach-process-build ()
-  "Run the mach build command.
+(defun mach-process-build-all (args)
+  (interactive (list
+                (mach-process-build-arguments)))
+  (mach-process--start "build" (s-join " " (append
+                                            (list mach-process--command-build)
+                                            args))))
+
+;;;###autoload
+(defun mach-process-build-binaries (args)
+  (interactive (list
+                (mach-process-build-arguments)))
+  (mach-process--start "build" (s-join " " (append
+                                            (list mach-process--command-build "binaries")
+                                            args))))
+
+;;;###autoload
+(defun mach-process-build-faster (args)
+  (interactive (list
+                (mach-process-build-arguments)))
+  (mach-process--start "build" (s-join " " (append
+                                            (list mach-process--command-build "faster")
+                                            args))))
+
+;;;###autoload (autoload 'mach-process-build "mach-process" nil t)
+(transient-define-prefix mach-process-build ()
+  "Run the mach test command.
 With the prefix argument, modify the command's invocation.
 Mach: Compile the current project."
-  (interactive)
-  (mach-process--start "build" mach-process--command-build))
+  ["Arguments"
+   ("-v" "Verbose" "--verbose")
+   ]
+  [["Actions"
+    ("a" "All"           mach-process-build-all)
+    ("b" "Binaries"      mach-process-build-binaries)
+    ("f" "Faster"        mach-process-build-faster)
+   ]])
 
+(defun mach-process-build-arguments ()
+  (transient-args 'mach-process-build))
 
 ;;;###autoload
 (defun mach-process-clobber ()
@@ -387,40 +420,59 @@ Mach: Run the current project."
   (mach-process--start "run" mach-process--command-run))
 
 ;;;###autoload
-(defun mach-process-test ()
-  "Run the mach test command.
-With the prefix argument, modify the command's invocation.
-Mach: Run the tests."
-  (interactive)
-  (mach-process--start "test" mach-process--command-test))
-
-;;;###autoload
-(defun mach-process-current-file-tests ()
+(defun mach-process-current-file-tests (args)
   "Run the mach test command for the current file.
 With the prefix argument, modify the command's invocation.
 Mach: Run the tests."
-  (interactive)
+  (interactive (list
+                (mach-process-test-arguments)))
   (let* ((target (or (buffer-file-name) default-directory))
+         (target (if (file-remote-p target)
+                     (tramp-file-name-localname (tramp-dissect-file-name target))
+                   target))
          (base (f-base target))
          (ext (downcase (f-ext (buffer-file-name)))))
     (if (and (s-equals? "cpp" ext)
              (string-match "^Test\\(.+\\)" base))
-        (mach-process--start "test" (concat mach-process--command-current-file-gtests
-                                            " '"
-                                            (match-string 1 base)
-                                            ".*'"))
-      (mach-process--start "test" (concat mach-process--command-current-file-tests
-                                          " "
-                                          target)))))
+        (mach-process--start "test" (concat
+                                     (s-join " " (append
+                                                  (list mach-process--command-current-file-gtests)
+                                                  args))
+                                     " '"
+                                     (match-string 1 base)
+                                     ".*'"))
+      (mach-process--start "test" (s-join " " (append
+                                               (list mach-process--command-current-file-tests)
+                                               args
+                                               (list target)))))))
+
 ;;;###autoload
-(defun mach-process-current-directory-tests ()
+(defun mach-process-current-directory-tests (args)
   "Run the mach test command for the current directory.
 With the prefix argument, modify the command's invocation.
 Mach: Run the tests."
-  (interactive)
-  (mach-process--start "test" (concat mach-process--command-current-directory-tests
-                                       " "
-                                       default-directory)))
+  (interactive (list
+                (mach-process-test-arguments)))
+  (mach-process--start "test" (s-join " " (append
+                                           (list mach-process--command-current-directory-tests)
+                                           args
+                                           (list default-directory)))))
+
+;;;###autoload (autoload 'mach-process-test "mach-process" nil t)
+(transient-define-prefix mach-process-test ()
+  "Run the mach test command.
+With the prefix argument, modify the command's invocation.
+Mach: Run the tests."
+  ["Arguments"
+   ("-h" "Headless" "--headless")
+   ]
+  [["Actions"
+    ("o" "Current file"      mach-process-current-file-tests)
+    ("d" "Current directory" mach-process-current-directory-tests)
+   ]])
+
+(defun mach-process-test-arguments ()
+  (transient-args 'mach-process-test))
 
 ;;;###autoload
 (defun mach-process-check ()
@@ -446,25 +498,58 @@ Requires mach-check to be installed."
       (revert-buffer t t t))))
 
 ;;;###autoload
-(defun mach-process-current-file-lint ()
+(defun mach-process-current-file-lint (args)
   "Run the mach lint command for the current file.
 With the prefix argument, modify the command's invocation.
 Mach: Lint."
-  (interactive)
+  (interactive (list
+                (mach-process-lint-arguments)))
   (add-hook
    'compilation-finish-functions
    'mach--process-current-file-lint-compilation-finish-function)
-  (mach-process--start "lint" (concat mach-process--command-current-file-lint
-                                      " "
-                                      (or (buffer-file-name) default-directory))))
+
+  (let* ((target (or (buffer-file-name) default-directory))
+         (target (if (file-remote-p target)
+                     (tramp-file-name-localname (tramp-dissect-file-name target))
+                   target)))
+    (mach-process--start "lint" (s-join " " (append
+                                             (list mach-process--command-current-file-lint)
+                                             args
+                                             (list target))))))
 
 ;;;###autoload
-(defun mach-process-outgoing-lint ()
+(defun mach-process-outgoing-lint (args)
   "Run the mach lint command for all outgoing files.
 With the prefix argument, modify the command's invocation.
 Mach: Lint."
-  (interactive)
-  (mach-process--start "lint" mach-process--command-outgoing-lint))
+  (interactive (list
+                (mach-process-lint-arguments)))
+  (add-hook
+   'compilation-finish-functions
+   'mach--process-current-file-lint-compilation-finish-function)
+
+  (mach-process--start "lint" (s-join " " (append
+                                           (list mach-process--command-outgoing-lint)
+                                           args))))
+
+;;;###autoload (autoload 'mach-process-lint "mach-process" nil t)
+(transient-define-prefix mach-process-lint ()
+  "Run the mach lint command.
+With the prefix argument, modify the command's invocation.
+Mach: Lint."
+  ["Arguments"
+   ("-f" "Fix" "--fix")
+   ("-W" "Warnings" "-W")
+   ("-i" "No ignore list" "--no-ignore")
+   ]
+  [["Actions"
+    ("f" "Current file"      mach-process-current-file-lint)
+    ;; ("d" "Current directory" mach-process-current-directory-tests)
+    ("o" "Outgoing"          mach-process-outgoing-lint)
+   ]])
+
+(defun mach-process-lint-arguments ()
+  (transient-args 'mach-process-lint))
 
 ;;;###autoload
 (defun mach-process-repeat ()
