@@ -233,15 +233,17 @@
         (list (match-string 1))))))
 
 ;;;###autoload
-(let ((form `(mach-lint
-              ,(rx-to-string
-                '(and (group (group (+ digit)) ":" (group (+ digit)))
-                      (+ " ") (or "error" "warning")))
-              compile-mach-lint--find-filename
-              2 3 2 1)))
-  (if (assq 'mach-lint compilation-error-regexp-alist-alist)
-      (setf (cdr (assq 'mach-lint compilation-error-regexp-alist-alist)) (cdr form))
-    (push form compilation-error-regexp-alist-alist)))
+(eval-after-load 'compile
+  (lambda ()
+    (let ((form `(mach-lint
+		  ,(rx-to-string
+                    '(and (group (group (+ digit)) ":" (group (+ digit)))
+			  (+ " ") (or "error" "warning")))
+		  compile-mach-lint--find-filename
+		  2 3 2 1)))
+      (if (assq 'mach-lint compilation-error-regexp-alist-alist)
+	  (setf (cdr (assq 'mach-lint compilation-error-regexp-alist-alist)) (cdr form))
+	(push form compilation-error-regexp-alist-alist)))))
 
 ;; (eval-after-load 'compile
 ;;   '(progn
