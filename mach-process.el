@@ -175,7 +175,7 @@
 ;; -e:null:1
 ;;  0:07.37 INFO exiting test
 ;;  0:07.37 INFO (xpcshell/head.js) | test run_next_test 0 finished (2)
-;;  0:07.37 ERROR Unexpected exception NS_ERROR_ABORT: 
+;;  0:07.37 ERROR Unexpected exception NS_ERROR_ABORT:
 ;; _abort_failed_test@/Users/nalexander/Mozilla/gecko/testing/xpcshell/head.js:833:20
 ;; do_report_result@/Users/nalexander/Mozilla/gecko/testing/xpcshell/head.js:934:5
 ;; Assert<@/Users/nalexander/Mozilla/gecko/testing/xpcshell/head.js:73:21
@@ -210,9 +210,9 @@
         eol)))
     (list re 2 3 4 nil 0)))
 
-          
 
-                 
+
+
 
   ;; (let ((file "\\([^\n]+\\)")
   ;;       (start-line "\\([0-9]+\\)")
@@ -234,16 +234,17 @@
 
 ;;;###autoload
 (eval-after-load 'compile
-  (lambda ()
-    (let ((form `(mach-lint
-		  ,(rx-to-string
-                    '(and (group (group (+ digit)) ":" (group (+ digit)))
-			  (+ " ") (or "error" "warning")))
-		  compile-mach-lint--find-filename
-		  2 3 2 1)))
-      (if (assq 'mach-lint compilation-error-regexp-alist-alist)
-	  (setf (cdr (assq 'mach-lint compilation-error-regexp-alist-alist)) (cdr form))
-	(push form compilation-error-regexp-alist-alist)))))
+  (let ((form `(mach-lint
+		,(rx-to-string
+                  '(and (group (group (+ digit)) ":" (group (+ digit)))
+			(+ " ") (or "error" "warning")))
+		compile-mach-lint--find-filename
+		2 3 2 1)))
+    (require 'compile)
+    (if (assq 'mach-lint compilation-error-regexp-alist-alist)
+	(setf (cdr (assq 'mach-lint compilation-error-regexp-alist-alist)) (cdr form))
+      (push form compilation-error-regexp-alist-alist))
+    nil))
 
 ;; (eval-after-load 'compile
 ;;   '(progn
