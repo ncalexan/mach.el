@@ -386,6 +386,14 @@ if the CMD is expected to open and external application."
                                             args))))
 
 ;;;###autoload
+(defun mach-process-build-current-directory (args)
+  (interactive (list
+                (mach-process-build-arguments)))
+  (mach-process--start "build" (s-join " " (append
+                                            (list mach-process--command-build default-directory)
+                                            args))))
+
+;;;###autoload
 (defun mach-process-build-faster (args)
   (interactive (list
                 (mach-process-build-arguments)))
@@ -404,6 +412,7 @@ Mach: Compile the current project."
   [["Actions"
     ("a" "All"           mach-process-build-all)
     ("b" "Binaries"      mach-process-build-binaries)
+    ("d" "Current directory" mach-process-build-current-directory)
     ("f" "Faster"        mach-process-build-faster)
    ]])
 
