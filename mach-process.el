@@ -560,9 +560,9 @@ Mach: Lint."
    ("-i" "No ignore list" "--no-ignore")
    ]
   [["Actions"
-    ("f" "Current file"      mach-process-current-file-lint)
+    ("o" "Current file"      mach-process-current-file-lint)
     ;; ("d" "Current directory" mach-process-current-directory-tests)
-    ("o" "Outgoing"          mach-process-outgoing-lint)
+    ("O" "Outgoing"          mach-process-outgoing-lint)
    ]])
 
 (defun mach-process-lint-arguments ()
