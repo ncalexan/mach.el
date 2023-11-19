@@ -3,8 +3,13 @@
 
 (package-file "mach.el")
 
+(depends-on "transient")
+(depends-on "f")
+(depends-on "s")
+(depends-on "transient")
+
 (development
- # (depends-on "ecukes")
- # (depends-on "espuds")
- # (depends-on "wrap-region")
+ ;; (depends-on "ecukes")
+ ;; (depends-on "espuds")
+ ;; (depends-on "wrap-region")
 )
