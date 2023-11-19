@@ -81,6 +81,10 @@
   "Subcommand used by `mach-process-clobber'."
   :type 'string)
 
+(defcustom mach-process--command-configure "configure"
+  "Subcommand used by `mach-process-configure'."
+  :type 'string)
+
 (defcustom mach-process--command-run "run"
   "Subcommand used by `mach-process-run'."
   :type 'string)
@@ -307,14 +311,18 @@
                            (throw 'result (eshell-environment-variables))))
                        (setq root (f-parent root)))))
                  process-environment)))
-    ;; Avoid `mach lint` failing printing a UTF-8 cross or a check mark under Windows.
-    (cons "PYTHONIOENCODING=utf-8"
-          (cons "MOZ_PURGE_CACHES=1"
-                (-sort #'s-less?
-                       (--filter (and (s-contains? "=" it)
-                                      (not (s-ends-with? "=" it))
-                                      (s-starts-with? "MOZ" it)
-                                      (not (s-starts-with? "MOZILLABUILD=" it))) env))))))
+    (append
+     (list
+      ;; Avoid `mach lint` failing to "setup a terminal".
+      "TERM=dumb"
+      ;; Avoid `mach lint` failing printing a UTF-8 cross or a check mark under Windows.
+      "PYTHONIOENCODING=utf-8"
+      "MOZ_PURGE_CACHES=1")
+     (-sort #'s-less?
+            (--filter (and (s-contains? "=" it)
+                           (not (s-ends-with? "=" it))
+                           (s-starts-with? "MOZ" it)
+                           (not (s-starts-with? "MOZILLABUILD=" it))) env)))))
 
 (defun mach-process--start (name command &optional last-cmd opens-external)
   "Start the mach process NAME with the mach command COMMAND.
@@ -402,6 +410,37 @@ if the CMD is expected to open and external application."
                                             (list mach-process--command-build "faster")
                                             args))))
 
+;;;###autoload
+(defun mach-process-build-stage-package (args)
+  (interactive (list
+                (mach-process-build-arguments)))
+  (mach-process--start "build" (s-join " " (append
+                                            (list mach-process--command-build "stage-package")
+                                            args))))
+
+;;;###autoload
+(defun mach-process-build-package (args)
+  (interactive (list
+                (mach-process-build-arguments)))
+  (mach-process--start "build" (s-join " " (append
+                                            (list mach-process--command-build "package")
+                                            args))))
+
+;;;###autoload
+(defun mach-process-build-configure (args)
+  (interactive (list
+                (mach-process-build-arguments)))
+  (mach-process--start "configure" (s-join " " (append
+                                                (list mach-process--command-configure)
+                                                args))))
+
+(transient-define-argument mach-process-build-jobs:-j ()
+  :description "Limit number of parallel jobs"
+  :class 'transient-option
+  :shortarg "-j"
+  :argument "--jobs="
+  :reader 'transient-read-number-N+)
+
 ;;;###autoload (autoload 'mach-process-build "mach-process" nil t)
 (transient-define-prefix mach-process-build ()
   "Run the mach test command.
@@ -409,16 +448,35 @@ With the prefix argument, modify the command's invocation.
 Mach: Compile the current project."
   ["Arguments"
    ("-v" "Verbose" "--verbose")
+   (mach-process-build-jobs:-j)
    ]
   [["Actions"
     ("a" "All"           mach-process-build-all)
-    ("b" "Binaries"      mach-process-build-binaries)
+    ("b" "binaries"      mach-process-build-binaries)
+    ("c" "configure"     mach-process-build-configure)
     ("d" "Current directory" mach-process-build-current-directory)
-    ("f" "Faster"        mach-process-build-faster)
+    ("f" "faster"        mach-process-build-faster)
+    ("s" "stage-package" mach-process-build-stage-package)
+    ("p" "package"       mach-process-build-package)
    ]])
 
 (defun mach-process-build-arguments ()
   (transient-args 'mach-process-build))
+
+;; ;;;###autoload (autoload 'mach-process-package "mach-process" nil t)
+;; (transient-define-prefix mach-process-package ()
+;;   "Run the mach package command.
+;; With the prefix argument, modify the command's invocation.
+;; Mach: Compile the current project."
+;;   ["Arguments"
+;;    ("-v" "Verbose" "--verbose")
+;;    ]
+;;   [["Actions"
+;;     ("p" "Package"           mach-process-package)
+;;    ]])
+
+;; (defun mach-process-package-arguments ()
+;;   (transient-args 'mach-process-package))
 
 ;;;###autoload
 (defun mach-process-clobber ()
@@ -481,6 +539,7 @@ Mach: Run the tests."
 With the prefix argument, modify the command's invocation.
 Mach: Run the tests."
   ["Arguments"
+   ("-a" "Appname" "--appname=dist")
    ("-h" "Headless" "--headless")
    ]
   [["Actions"
@@ -555,8 +614,8 @@ Mach: Lint."
 With the prefix argument, modify the command's invocation.
 Mach: Lint."
   ["Arguments"
-   ("-f" "Fix" "--fix")
    ("-W" "Warnings" "-W")
+   ("-f" "Fix" "--fix")
    ("-i" "No ignore list" "--no-ignore")
    ]
   [["Actions"
