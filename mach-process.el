@@ -113,7 +113,7 @@
   "Subcommand used by `mach-process-current-file-lint'."
   :type 'string)
 
-(defcustom mach-process--command-outgoing-lint "lint --outgoing"
+(defcustom mach-process--command-outgoing-lint "lint --outgoing=origin/bookmarks/central"
   "Subcommand used by `mach-process-outgoing-lint'."
   :type 'string)
 
